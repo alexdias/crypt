@@ -33,10 +33,14 @@ type postDataResponse struct {
 	Err error  `json:"err,omitempty"`
 }
 
+func (r postDataResponse) error() error { return r.Err }
+
 type getDataResponse struct {
 	Data string `json:"plaintext"`
 	Err  error  `json:"err,omitempty"`
 }
+
+func (r getDataResponse) error() error { return r.Err }
 
 func SetUpHTTPHandlers(ctx context.Context, s StoreService, logger log.Logger) http.Handler {
 	r := mux.NewRouter()
@@ -106,7 +110,42 @@ func decodeGetDataRequest(_ context.Context, r *http.Request) (request interface
 	}, nil
 }
 
+type errorer interface {
+	error() error
+}
+
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	if e, ok := response.(errorer); ok && e.error() != nil {
+		encodeError(ctx, w, e.error())
+		return nil
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
+}
+
+func encodeError(_ context.Context, w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(statusCodeFromError(err))
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"error": err.Error(),
+	})
+}
+
+func statusCodeFromError(err error) int {
+	switch err {
+	case ErrNotFound:
+		return http.StatusNotFound
+	case ErrAlreadyExists:
+		return http.StatusConflict
+	default:
+		if e, ok := err.(httptransport.Error); ok {
+			switch e.Domain {
+			case httptransport.DomainDecode:
+				return http.StatusBadRequest
+			default:
+				return http.StatusInternalServerError
+			}
+		}
+		return http.StatusInternalServerError
+	}
 }
