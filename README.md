@@ -11,11 +11,11 @@ This service uses go-kit for its design, please have a look at the following lin
 
 ## Building and running the server
 
-`
-mkdir -p $GOPATH/src/github.com/alexnvdias/crypt
-cd $GOPATH/src/github.com/alexnvdias/crypt/server
-make
-`
+`mkdir -p $GOPATH/src/github.com/alexnvdias/crypt`
+
+`cd $GOPATH/src/github.com/alexnvdias/crypt/server`
+
+`make`
 
 After running the above, you should have a `server` binary, which you can then run.
 
@@ -24,4 +24,5 @@ After running the above, you should have a `server` binary, which you can then r
 Using cURL:
 
 `curl -X POST -d '{"id": "data_id", "plaintext": "data_to_encrypt"}' http://localhost:8080/` to insert some plaintext data;
+
 `curl 'http://localhost:8080?id=data_id&key=retrieval_key'` to retrieve the originally inserted data using the resulting key.
