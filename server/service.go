@@ -24,7 +24,7 @@ type PlainTextData struct {
 
 type inMemoryStoreService struct {
 	mtx sync.RWMutex
-	m   map[string]string
+	m   map[string][]byte
 }
 
 var (
@@ -37,18 +37,17 @@ var (
 
 func NewInMemoryStoreService() StoreService {
 	return &inMemoryStoreService{
-		m: make(map[string]string),
+		m: make(map[string][]byte),
 	}
 }
 
 func (s *inMemoryStoreService) GetData(ctx context.Context, id string, key []byte) ([]byte, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
-	string_ciphertext, ok := s.m[id]
+	ciphertext, ok := s.m[id]
 	if !ok {
 		return nil, ErrNotFound
 	}
-	ciphertext := []byte(string_ciphertext)
 	plaintext, err := decrypt(key, ciphertext)
 	if err != nil {
 		return nil, ErrDecryptingData
@@ -72,7 +71,7 @@ func (s *inMemoryStoreService) PostData(ctx context.Context, data PlainTextData)
 	if err != nil {
 		return nil, ErrEncryptingData
 	}
-	s.m[data.ID] = string(ciphertext)
+	s.m[data.ID] = ciphertext
 	return key, nil
 }
 
@@ -103,7 +102,8 @@ func decrypt(key, ciphertext []byte) ([]byte, error) {
 		return nil, ErrDecryptingData
 	}
 	iv := ciphertext[:aes.BlockSize]
-	encrypted_text := ciphertext[aes.BlockSize:]
+	encrypted_text := make([]byte, len(ciphertext)-aes.BlockSize)
+	copy(encrypted_text, ciphertext[aes.BlockSize:])
 	cfb := cipher.NewCFBDecrypter(block, iv)
 	cfb.XORKeyStream(encrypted_text, encrypted_text)
 	string_text := string(encrypted_text)
