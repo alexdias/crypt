@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -17,6 +18,7 @@ var (
 	ErrMissingParameters        = errors.New("query parameters are missing")
 	ErrMissingIdArgument        = errors.New("id POST argument must be specified")
 	ErrMissingPlaintextArgument = errors.New("plaintext POST argument must be specified")
+	ErrDecodingKey              = errors.New("error decoding key argument")
 )
 
 type postDataRequest struct {
@@ -29,7 +31,7 @@ type getDataRequest struct {
 }
 
 type postDataResponse struct {
-	Key string `json:"key"`
+	Key []byte `json:"key"`
 	Err error  `json:"err,omitempty"`
 }
 
@@ -69,8 +71,7 @@ func makePostDataEndpoint(s StoreService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(postDataRequest)
 		key, e := s.PostData(ctx, req.PlainTextData)
-		string_key := string(key)
-		return postDataResponse{Key: string_key, Err: e}, nil
+		return postDataResponse{Key: key, Err: e}, nil
 	}
 }
 
@@ -103,7 +104,10 @@ func decodeGetDataRequest(_ context.Context, r *http.Request) (request interface
 	if id == "" || key == "" {
 		return nil, ErrMissingParameters
 	}
-	byte_key := []byte(key)
+	byte_key, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		return nil, ErrDecodingKey
+	}
 	return getDataRequest{
 		ID:  id,
 		Key: byte_key,
@@ -137,6 +141,8 @@ func statusCodeFromError(err error) int {
 		return http.StatusNotFound
 	case ErrAlreadyExists:
 		return http.StatusConflict
+	case ErrGeneratingKey, ErrEncryptingData, ErrDecryptingData:
+		return http.StatusInternalServerError
 	default:
 		if e, ok := err.(httptransport.Error); ok {
 			switch e.Domain {
