@@ -5,8 +5,11 @@ A small go microservice that provides functionality to store data in an encrypte
 ## Go-kit
 
 This service uses go-kit for its design, please have a look at the following links for more information:
+
 -[Microservices in Go using Go-kit] (https://blog.heroku.com/microservices_in_go_using_go_kit)
+
 -[Go kit: Go in the modern enterprise] (https://peter.bourgon.org/go-kit/)
+
 -[Go kit FAQ] (http://gokit.io/faq/)
 
 ## Building and running the server
