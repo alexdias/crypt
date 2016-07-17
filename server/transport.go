@@ -50,14 +50,14 @@ func SetUpHTTPHandlers(ctx context.Context, s StoreService, logger log.Logger) h
 		httptransport.ServerErrorLogger(logger),
 	}
 
-	r.Methods("POST").Path("/").Handler(httptransport.NewServer(
+	r.Methods("POST").Path("/store").Handler(httptransport.NewServer(
 		ctx,
 		makePostDataEndpoint(s),
 		decodePostDataRequest,
 		encodeResponse,
 		options...,
 	))
-	r.Methods("GET").Path("/").Handler(httptransport.NewServer(
+	r.Methods("GET").Path("/retrieve").Handler(httptransport.NewServer(
 		ctx,
 		makeGetDataEndpoint(s),
 		decodeGetDataRequest,

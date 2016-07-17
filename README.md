@@ -26,7 +26,7 @@ After running the above, you should have a `server` binary, which you can then r
 
 Using cURL:
 
-`curl -X POST -d '{"id": "data_id", "plaintext": "data_to_encrypt"}' http://localhost:8080/` to insert some plaintext data;
+`curl -X POST -d '{"id": "data_id", "plaintext": "data_to_encrypt"}' http://localhost:8080/store` to insert some plaintext data;
 
-`curl 'http://localhost:8080?id=data_id&key=retrieval_key'` to retrieve the originally inserted data using the resulting key.
+`curl 'http://localhost:8080/retrieve?id=data_id&key=retrieval_key'` to retrieve the originally inserted data using the resulting key.
 Please note that the retrieval key will need to be URL encoded as it is returned in base64 format.
