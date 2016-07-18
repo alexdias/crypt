@@ -49,5 +49,5 @@ The client can be used to perform requests to the server, like so:
         if err_retrieve != nil {
             panic(err_retrieve)
         }
-        println(data)
+        println(string(data))
     }
