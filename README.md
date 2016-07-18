@@ -51,3 +51,9 @@ The client can be used to perform requests to the server, like so:
         }
         println(string(data))
     }
+
+## Running the tests
+
+On the project root directory:
+
+    make

@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-type httpClient struct {
+type HttpClient struct {
 	url string
 }
 
@@ -23,17 +23,19 @@ type RetrieveResponse struct {
 }
 
 func NewHTTPClient(u string) Client {
-	return &httpClient{
+	return &HttpClient{
 		url: u,
 	}
 }
 
 var (
-	ErrPerformingReq = errors.New("error performing request to server")
-	ErrDecodingJson  = errors.New("error decoding json response")
+	ErrPerformingReq  = errors.New("error performing request to server")
+	ErrDecodingJson   = errors.New("error decoding json response")
+	ErrAlreadyPresent = errors.New("id already present in store")
+	ErrDecryptingData = errors.New("error decrypting the data")
 )
 
-func (c *httpClient) Store(id, payload []byte) (aesKey []byte, err error) {
+func (c *HttpClient) Store(id, payload []byte) (aesKey []byte, err error) {
 	json_params := fmt.Sprintf(`{"id": "%v", "plaintext": "%v"}`, string(id), string(payload))
 	json_bytes := []byte(json_params)
 	endpoint_url := c.url + "store"
@@ -51,13 +53,18 @@ func (c *httpClient) Store(id, payload []byte) (aesKey []byte, err error) {
 		return nil, ErrDecodingJson
 	}
 	if response.Err != "" {
-		return nil, errors.New(response.Err)
+		switch response.Err {
+		case "id already present in store":
+			return nil, ErrAlreadyPresent
+		default:
+			return nil, errors.New(response.Err)
+		}
 	}
 	key_bytes := []byte(response.Key)
 	return key_bytes, nil
 }
 
-func (c *httpClient) Retrieve(id, aesKey []byte) (payload []byte, err error) {
+func (c *HttpClient) Retrieve(id, aesKey []byte) (payload []byte, err error) {
 	endpoint_url := c.url + "retrieve"
 	req, err := http.NewRequest("GET", endpoint_url, nil)
 	q := req.URL.Query()
@@ -76,7 +83,12 @@ func (c *httpClient) Retrieve(id, aesKey []byte) (payload []byte, err error) {
 		return nil, ErrDecodingJson
 	}
 	if response.Err != "" {
-		return nil, errors.New(response.Err)
+		switch response.Err {
+		case "error decrypting the data":
+			return nil, ErrDecryptingData
+		default:
+			return nil, errors.New(response.Err)
+		}
 	}
 	return []byte(response.Data), nil
 }
