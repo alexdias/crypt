@@ -14,11 +14,9 @@ This service uses go-kit for its design, please have a look at the following lin
 
 ## Building and running the server
 
-`mkdir -p $GOPATH/src/github.com/alexnvdias/crypt`
-
-`cd $GOPATH/src/github.com/alexnvdias/crypt/server`
-
-`make`
+    mkdir -p $GOPATH/src/github.com/alexnvdias/crypt
+    cd $GOPATH/src/github.com/alexnvdias/crypt/server
+    make
 
 After running the above, you should have a `server` binary, which you can then run.
 
@@ -30,3 +28,26 @@ Using cURL:
 
 `curl 'http://localhost:8080/retrieve?id=data_id&key=retrieval_key'` to retrieve the originally inserted data using the resulting key.
 Please note that the retrieval key will need to be URL encoded as it is returned in base64 format.
+
+## Running the client
+
+The client can be used to perform requests to the server, like so:
+
+    package main
+    
+    import (
+        "github.com/alexnvdias/crypt/client"
+    )
+    
+    func main() {
+        c := client.NewHTTPClient("http://localhost:8080/")
+        key, err_store := c.Store([]byte("1"), []byte("data_1"))
+        if err_store != nil {
+            panic(err_store)
+        }
+        data, err_retrieve := c.Retrieve([]byte("1"), key)
+        if err_retrieve != nil {
+            panic(err_retrieve)
+        }
+        println(data)
+    }
