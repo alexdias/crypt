@@ -18,10 +18,12 @@ func Run(httpAddr string, logger log.Logger) {
 		ctx = context.Background()
 	}
 
-	var s StoreService
+	var st Storage
 	{
-		s = NewInMemoryStoreService()
+		st = NewInMemoryStorage()
 	}
+
+	s := NewStoreService(st)
 
 	var h http.Handler
 	{

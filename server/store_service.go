@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"sync"
 
 	"golang.org/x/net/context"
 )
@@ -22,9 +21,8 @@ type PlainTextData struct {
 	Data string `json:"plaintext"`
 }
 
-type inMemoryStoreService struct {
-	mtx sync.RWMutex
-	m   map[string][]byte
+type storeService struct {
+	storage Storage
 }
 
 var (
@@ -35,17 +33,15 @@ var (
 	ErrDecryptingData = errors.New("error decrypting the data")
 )
 
-func NewInMemoryStoreService() StoreService {
-	return &inMemoryStoreService{
-		m: make(map[string][]byte),
+func NewStoreService(storage Storage) StoreService {
+	return &storeService{
+		storage: storage,
 	}
 }
 
-func (s *inMemoryStoreService) GetData(ctx context.Context, id string, key []byte) ([]byte, error) {
-	s.mtx.RLock()
-	defer s.mtx.RUnlock()
-	ciphertext, ok := s.m[id]
-	if !ok {
+func (s *storeService) GetData(ctx context.Context, id string, key []byte) ([]byte, error) {
+	ciphertext, storage_err := s.storage.get(id)
+	if storage_err != nil {
 		return nil, ErrNotFound
 	}
 	plaintext, err := decrypt(key, ciphertext)
@@ -55,23 +51,20 @@ func (s *inMemoryStoreService) GetData(ctx context.Context, id string, key []byt
 	return plaintext, nil
 }
 
-func (s *inMemoryStoreService) PostData(ctx context.Context, data PlainTextData) ([]byte, error) {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-	if _, ok := s.m[data.ID]; ok {
-		return nil, ErrAlreadyExists
-	}
-
+func (s *storeService) PostData(ctx context.Context, data PlainTextData) ([]byte, error) {
 	key := make([]byte, 32) // 32 bytes for AES-256
 	_, err := rand.Read(key)
 	if err != nil {
 		return nil, ErrGeneratingKey
 	}
-	ciphertext, err := encrypt(key, []byte(data.Data))
-	if err != nil {
+	ciphertext, encrypt_err := encrypt(key, []byte(data.Data))
+	if encrypt_err != nil {
 		return nil, ErrEncryptingData
 	}
-	s.m[data.ID] = ciphertext
+	storage_err := s.storage.put(data.ID, ciphertext)
+	if storage_err != nil {
+		return nil, ErrAlreadyExists
+	}
 	return key, nil
 }
 
