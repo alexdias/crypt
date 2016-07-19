@@ -64,9 +64,8 @@ func TestOneKeyCantDecryptAnother(t *testing.T) {
 		t.Error("Error when storing payload")
 	}
 
-	payload2 := []byte("data2")
 	id4 := []byte("4")
-	key2, err2 := cl.Store(id4, payload2)
+	key2, err2 := cl.Store(id4, payload1)
 	if err2 != nil {
 		t.Error("Error when storing payload")
 	}
@@ -89,7 +88,7 @@ func TestOneKeyCantDecryptAnother(t *testing.T) {
 		t.Error("Retrieved data does not match")
 	}
 	data2, err4 := cl.Retrieve(id4, key2)
-	if string(data2) != string(payload2) {
+	if string(data2) != string(payload1) {
 		if err4 != nil {
 			t.Error(err4)
 		}
@@ -99,7 +98,7 @@ func TestOneKeyCantDecryptAnother(t *testing.T) {
 
 func TestSpecialCharacters(t *testing.T) {
 	cl := setupClient()
-	payload := []byte("ÇÇóà~~")
+	payload := []byte("ÇÇóà~~âôâô")
 	id := []byte("5")
 	key, err := cl.Store(id, payload)
 	if err != nil {
