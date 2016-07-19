@@ -33,6 +33,7 @@ var (
 	ErrDecodingJson   = errors.New("error decoding json response")
 	ErrAlreadyPresent = errors.New("id already present in store")
 	ErrDecryptingData = errors.New("error decrypting the data")
+	ErrNotFound       = errors.New("item not found in store")
 )
 
 func (c *HttpClient) Store(id, payload []byte) (aesKey []byte, err error) {
@@ -86,6 +87,8 @@ func (c *HttpClient) Retrieve(id, aesKey []byte) (payload []byte, err error) {
 		switch response.Err {
 		case "error decrypting the data":
 			return nil, ErrDecryptingData
+		case "id not found in store":
+			return nil, ErrNotFound
 		default:
 			return nil, errors.New(response.Err)
 		}

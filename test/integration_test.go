@@ -113,3 +113,13 @@ func TestSpecialCharacters(t *testing.T) {
 		t.Error("Retrieved data does not equal original payload")
 	}
 }
+
+func TestNotPresent(t *testing.T) {
+	cl := setupClient()
+	key := []byte("c29tZWtleQ==") // somekey
+	id := []byte("6")
+	_, err := cl.Retrieve(id, key)
+	if err != client.ErrNotFound {
+		t.Error(err)
+	}
+}
