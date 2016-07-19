@@ -96,3 +96,21 @@ func TestOneKeyCantDecryptAnother(t *testing.T) {
 		t.Error("Retrieved data does not match")
 	}
 }
+
+func TestSpecialCharacters(t *testing.T) {
+	cl := setupClient()
+	payload := []byte("ÇÇóà~~")
+	id := []byte("5")
+	key, err := cl.Store(id, payload)
+	if err != nil {
+		t.Error("Error when storing payload")
+	}
+
+	retrieved_data, err_retrieve := cl.Retrieve(id, key)
+	if err_retrieve != nil {
+		t.Error("Error when retrieving data")
+	}
+	if string(retrieved_data) != string(payload) {
+		t.Error("Retrieved data does not equal original payload")
+	}
+}
